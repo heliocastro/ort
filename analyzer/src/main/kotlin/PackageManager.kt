@@ -67,7 +67,6 @@ abstract class PackageManager(
          * The list of all available package managers in the classpath.
          */
         val ALL by lazy { LOADER.iterator().asSequence().toList() }
-
         private val IGNORED_DIRECTORY_MATCHERS = listOf(
             // Ignore intermediate build system directories.
             ".gradle",
