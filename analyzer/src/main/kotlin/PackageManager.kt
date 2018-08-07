@@ -67,6 +67,25 @@ abstract class PackageManager(
          * The list of all available package managers in the classpath.
          */
         val ALL by lazy { LOADER.iterator().asSequence().toList() }
+/**
+        val ALL by lazy {
+            listOf(
+                    Gradle,
+                    Maven,
+                    SBT,
+                    NPM,
+                    Yarn,
+                    // TODO: CocoaPods,
+                    GoDep,
+                    // TODO: Bower,
+                    PIP,
+                    Bundler,
+                    PhpComposer,
+                    Stack,
+                    BitBake
+            )
+        }
+**/
 
         private val IGNORED_DIRECTORY_MATCHERS = listOf(
             // Ignore intermediate build system directories.
