@@ -58,7 +58,7 @@ class DotNet(
 
             itemGroups.forEach { itemGroup ->
                 itemGroup.packageReference?.forEach {
-                    if (!it.include.isNullOrEmpty()) {
+                    if (!it.include.isEmpty()) {
                         map[it.include] = it.version
                     }
                 }
