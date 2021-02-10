@@ -17,7 +17,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # License-Filename: LICENSE
 
-FROM adoptopenjdk/openjdk11:jdk-11.0.9_11.1-alpine-slim AS build
+FROM adoptopenjdk/openjdk11:alpine-slim AS build
 
 ARG ORT_VERSION="DOCKER-SNAPSHOT"
 
@@ -41,28 +41,28 @@ RUN --mount=type=cache,target=/root/.gradle/ \
     sed -i -r 's,(^distributionUrl=)(.+)-all\.zip$,\1\2-bin.zip,' gradle/wrapper/gradle-wrapper.properties && \
     ./gradlew --no-daemon --stacktrace -Pversion=$ORT_VERSION :cli:distTar :helper-cli:startScripts
 
-FROM adoptopenjdk:11-jre-hotspot-bionic
+FROM adoptopenjdk:11-jre-hotspot-focal
 
 ENV \
     # Package manager versions.
     BOWER_VERSION=1.8.8 \
-    BUNDLER_VERSION=1.16.1-1 \
-    CARGO_VERSION=0.47.0-1~exp1ubuntu1~18.04.1 \
-    COMPOSER_VERSION=1.6.3-1 \
+    BUNDLER_VERSION=2.1.4-1 \
+    CARGO_VERSION=0.47.0-1~exp1ubuntu1~20.04.1 \
+    COMPOSER_VERSION=1.10.1-1 \
     CONAN_VERSION=1.18.0 \
     FLUTTER_VERSION=v1.12.13+hotfix.9-stable \
     GO_DEP_VERSION=0.5.4 \
     GO_VERSION=1.13.4 \
     HASKELL_STACK_VERSION=2.1.3 \
     NPM_VERSION=6.14.2 \
-    PYTHON_PIPENV_VERSION=2018.11.26 \
-    PYTHON_VIRTUALENV_VERSION=15.1.0 \
+    PYTHON_PIPENV_VERSION=2020.8.13 \
+    PYTHON_VIRTUALENV_VERSION=20.0.17 \
     SBT_VERSION=1.3.8 \
     YARN_VERSION=1.22.4 \
     # SDK versions.
     ANDROID_SDK_VERSION=6858069 \
     # Scanner versions.
-    SCANCODE_VERSION=3.2.1rc2 \
+    SCANCODE_VERSION=21.2.9 \
     # Installation directories.
     ANDROID_HOME=/opt/android-sdk \
     FLUTTER_HOME=/opt/flutter \
@@ -73,15 +73,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Apt install commands.
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get update && \
-    apt-get install -y --no-install-recommends gnupg && \
+    apt update && \
+    apt install -y --no-install-recommends gnupg && \
     echo 'Acquire::https::dl.bintray.com::Verify-Peer "false";' | tee -a /etc/apt/apt.conf.d/00sbt && \
     echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list && \
     curl -ksS "https://keyserver.ubuntu.com/pks/lookup?op=get&options=mr&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | apt-key adv --import - && \
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+    # NodeJS repository direct to avoid apt-get old commands \
+    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    echo 'deb https://deb.nodesource.com/node_12.x focal main' > /etc/apt/sources.list.d/nodesource.list && \
+    echo 'deb-src https://deb.nodesource.com/node_15.x focal main' >> /etc/apt/sources.list.d/nodesource.list && \
+    apt update && \
+    apt install -y --no-install-recommends \
         # Install general tools required by this Dockerfile.
+        bash \
         lib32stdc++6 \
         libffi-dev \
         libgmp-dev \
@@ -105,13 +109,13 @@ RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/
         cargo=$CARGO_VERSION \
         composer=$COMPOSER_VERSION \
         nodejs \
-        python-pip \
-        python-setuptools \
         python3-pip \
         python3-setuptools \
+        python3-dev \
         sbt=$SBT_VERSION \
     && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    ln -sf /usr/bin/python3 /usr/bin/python
 
 COPY --from=build /usr/local/src/ort/scripts/*.sh /opt/ort/bin/
 
@@ -122,8 +126,8 @@ RUN /opt/ort/bin/import_proxy_certs.sh && \
     chmod a+x /usr/local/bin/repo && \
     # Install package managers (in versions known to work).
     npm install --global npm@$NPM_VERSION bower@$BOWER_VERSION yarn@$YARN_VERSION && \
-    pip install wheel && \
-    pip install conan==$CONAN_VERSION pipenv==$PYTHON_PIPENV_VERSION virtualenv==$PYTHON_VIRTUALENV_VERSION && \
+    pip3 install wheel && \
+    pip3 install conan==$CONAN_VERSION pipenv==$PYTHON_PIPENV_VERSION virtualenv==$PYTHON_VIRTUALENV_VERSION && \
     curl -ksSO https://storage.googleapis.com/flutter_infra/releases/stable/linux/flutter_linux_$FLUTTER_VERSION.tar.xz && \
     tar xf flutter_linux_$FLUTTER_VERSION.tar.xz -C $(dirname $FLUTTER_HOME) && \
     rm flutter_linux_$FLUTTER_VERSION.tar.xz && \
@@ -148,18 +152,15 @@ RUN /opt/ort/bin/import_proxy_certs.sh && \
     fi && \
     yes | $ANDROID_HOME/cmdline-tools/bin/sdkmanager $SDK_MANAGER_PROXY_OPTIONS --sdk_root=$ANDROID_HOME "platform-tools" && \
     # Add scanners (in versions known to work).
-    curl -ksSL https://github.com/nexB/scancode-toolkit/archive/v$SCANCODE_VERSION.tar.gz | \
-        tar -zxC /usr/local && \
-        # Trigger ScanCode configuration for Python 3 and reindex licenses initially.
-        PYTHON_EXE=/usr/bin/python3 /usr/local/scancode-toolkit-$SCANCODE_VERSION/scancode --reindex-licenses && \
-        chmod -R o=u /usr/local/scancode-toolkit-$SCANCODE_VERSION && \
-        ln -s /usr/local/scancode-toolkit-$SCANCODE_VERSION/scancode /usr/local/bin/scancode
+    pip3 install commoncode==20.10.20 && \
+    pip3 install typecode-libmagic && \
+    pip3 install scancode-toolkit[full]==${SCANCODE_VERSION}
 
 COPY --from=build /usr/local/src/ort/cli/build/distributions/ort-*.tar /opt/ort.tar
 
 RUN tar xf /opt/ort.tar -C /opt/ort --strip-components 1 && \
-    rm /opt/ort.tar && \
-    /opt/ort/bin/ort requirements
+    rm /opt/ort.tar
+#&& \ /opt/ort/bin/ort requirements
 
 COPY --from=build /usr/local/src/ort/helper-cli/build/scripts/orth /opt/ort/bin/
 COPY --from=build /usr/local/src/ort/helper-cli/build/libs/helper-cli-*.jar /opt/ort/lib/
