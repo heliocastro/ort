@@ -58,7 +58,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build base image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: base
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -83,7 +83,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build NodeJS image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: nodejs
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -112,7 +112,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Python image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: python
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -145,7 +145,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Rust image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: rust
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -169,7 +169,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Ruby image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: ruby
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -196,7 +196,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Golang image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: golang
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -223,7 +223,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Android image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: android
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -249,7 +249,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Dart image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: dart
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -275,7 +275,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Dotnet image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: dotnet
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -302,7 +302,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Haskell image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: haskell
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -328,7 +328,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Scala image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: scala
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -354,7 +354,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Swift image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: swift
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -380,7 +380,7 @@ jobs:
           cat .versions >> $GITHUB_ENV
       - name: Build Bazel image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: bazel
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -434,7 +434,7 @@ jobs:
 
       - name: Build ORT minimal image
         id: image
-        uses: heliocastro/docker-build-control@v3
+        uses: heliocastro/docker-build-control@main
         with:
           name: ort-minimal
           target: minimal
@@ -442,6 +442,8 @@ jobs:
           version: ${{ needs.ort_version.outputs.ort_version }}
           invalidate-cache: ${{ inputs.invalidate-cache }}
           debug: ${{ inputs.debug }}
+          images: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/ort-minimal
           build-args: |
             NODEJS_VERSION=${{ env.NODEJS_VERSION }}
             ORT_VERSION=${{ needs.ort_version.outputs.ort_version }}
@@ -504,7 +506,7 @@ jobs:
             ${{ steps.meta-ort.outputs.tags }}
           labels: ${{ steps.meta-ort.outputs.labels }}
           build-contexts: |
-            minimal=docker-image://${{ env.REGISTRY }}/${{ github.repository }}/ort-minimal:${{ needs.ort_version.outputs.ort_version }}
+            minimal=docker-image://${{ env.REGISTRY }}/${{ github.repository_owner }}/ort-minimal:${{ needs.ort_version.outputs.ort_version }}
             android=docker-image://${{ env.REGISTRY }}/${{ github.repository }}/android:${{ needs.android_image.outputs.image_version }}
             swift=docker-image://${{ env.REGISTRY }}/${{ github.repository }}/swift:${{ needs.swift_image.outputs.image_version }}
             scala=docker-image://${{ env.REGISTRY }}/${{ github.repository }}/scala:${{ needs.scala_image.outputs.image_version }}
